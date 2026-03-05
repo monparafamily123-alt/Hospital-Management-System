@@ -48,10 +48,10 @@ class User {
   }
 
   static async update(id, userData) {
-    const { name, email } = userData;
+    const { name, email, profile_image } = userData;
     const [result] = await pool.execute(
-      'UPDATE users SET name = ?, email = ? WHERE id = ?',
-      [name, email, id]
+      'UPDATE users SET name = ?, email = ?, profile_image = ? WHERE id = ?',
+      [name, email, profile_image, id]
     );
     return result.affectedRows > 0;
   }

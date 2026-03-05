@@ -49,10 +49,10 @@ class Doctor {
   }
 
   static async update(id, doctorData) {
-    const { departmentId, experience, available_time, qualification, consultation_fee } = doctorData;
+    const { departmentId, experience, available_time, qualification, consultation_fee, profile_image } = doctorData;
     const [result] = await pool.execute(
-      'UPDATE doctors SET department_id = ?, experience = ?, available_time = ?, qualification = ?, consultation_fee = ? WHERE id = ?',
-      [departmentId, experience, available_time, qualification, consultation_fee, id]
+      'UPDATE doctors SET department_id = ?, experience = ?, available_time = ?, qualification = ?, consultation_fee = ?, profile_image = ? WHERE id = ?',
+      [departmentId, experience, available_time, qualification, consultation_fee, profile_image, id]
     );
     return result.affectedRows > 0;
   }

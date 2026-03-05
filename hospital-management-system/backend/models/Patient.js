@@ -55,10 +55,10 @@ class Patient {
   }
 
   static async update(id, patientData) {
-    const { age, phone, medical_history } = patientData;
+    const { age, phone, medical_history, profile_image } = patientData;
     const [result] = await pool.execute(
-      'UPDATE patients SET age = ?, phone = ?, medical_history = ? WHERE id = ?',
-      [age, phone, medical_history, id]
+      'UPDATE patients SET age = ?, phone = ?, medical_history = ?, profile_image = ? WHERE id = ?',
+      [age, phone, medical_history, profile_image, id]
     );
     return result.affectedRows > 0;
   }
