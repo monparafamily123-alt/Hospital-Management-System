@@ -91,7 +91,7 @@ class Patient {
       JOIN doctors d ON a.doctor_id = d.id 
       JOIN users u ON d.user_id = u.id 
       JOIN departments dep ON d.department_id = dep.id 
-      WHERE a.patient_id = ? AND a.status = 'completed' AND a.prescription IS NOT NULL
+      WHERE a.patient_id = ? AND a.prescription IS NOT NULL AND a.prescription != ''
       ORDER BY a.appointment_date DESC
     `, [patientId]);
     return rows;

@@ -22,11 +22,7 @@ class DoctorController {
 
   static async updatePrescription(req, res) {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-
+      console.log('🔄 Backend: Updating prescription...');
       const { id } = req.params;
       const { prescription } = req.body;
 
@@ -44,12 +40,18 @@ class DoctorController {
         return res.status(403).json({ message: 'Access denied' });
       }
 
+      // Update prescription
       await Appointment.updatePrescription(id, prescription);
+      
+      // Automatically mark appointment as completed when prescription is added
+      await Appointment.updateStatus(id, 'completed');
+      
       const updatedAppointment = await Appointment.findById(id);
 
+      console.log('✅ Prescription updated and appointment marked as completed');
       res.json({ message: 'Prescription updated successfully', appointment: updatedAppointment });
     } catch (error) {
-      console.error('Update prescription error:', error);
+      console.error('❌ Update prescription error:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   }
@@ -137,7 +139,7 @@ class DoctorController {
       }
 
       const appointments = await Appointment.getByDoctorId(doctor.id);
-      const prescriptions = appointments.filter(apt => apt.prescription && apt.status === 'completed');
+      const prescriptions = appointments.filter(apt => apt.prescription && apt.prescription.trim() !== '');
       
       console.log('✅ Prescriptions retrieved:', prescriptions.length);
       res.json(prescriptions);
