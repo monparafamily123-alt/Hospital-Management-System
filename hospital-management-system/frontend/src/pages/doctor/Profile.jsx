@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Calendar, Award, Clock, Building, DollarSign, Edit, Save, X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { User, Mail, Phone, MapPin, Calendar, Award, Clock, Building, DollarSign, Edit, Save, X, Camera, Upload } from 'lucide-react';
 import { doctorAPI } from '../../services/api';
 import { showSuccess, showError } from '../../utils/toast';
+import { useAuth } from '../../contexts/AuthContext';
 
 const DoctorProfile = () => {
   const [doctor, setDoctor] = useState(null);
@@ -9,6 +10,10 @@ const DoctorProfile = () => {
   const [editing, setEditing] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [apiError, setApiError] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef(null);
+  const { user, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -21,12 +26,22 @@ const DoctorProfile = () => {
   });
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    console.log('👨‍⚕️ Doctor Profile Component - User:', user);
+    console.log('👨‍⚕️ Doctor Profile Component - Authenticated:', isAuthenticated);
+    
+    if (isAuthenticated && user?.role === 'doctor') {
+      fetchProfile();
+    } else {
+      console.log('❌ User is not authenticated or not a doctor');
+      setApiError('User is not authenticated as a doctor');
+      setLoading(false);
+    }
+  }, [user, isAuthenticated]);
 
   const fetchProfile = async () => {
     try {
       console.log('👨‍⚕️ Fetching doctor profile...');
+      setApiError(null);
       const response = await doctorAPI.getProfile();
       console.log('✅ Doctor profile response:', response);
       setDoctor(response.data);
@@ -42,6 +57,8 @@ const DoctorProfile = () => {
       });
     } catch (error) {
       console.error('❌ Error fetching profile:', error);
+      setApiError(error.response?.data?.message || 'Failed to fetch profile');
+      setDoctor(null);
     } finally {
       setLoading(false);
     }
@@ -51,6 +68,54 @@ const DoctorProfile = () => {
     setEditing(true);
     setError('');
     setSuccess('');
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showError('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showError('Image size should be less than 5MB');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('profileImage', file);
+
+    setUploadingImage(true);
+    try {
+      const response = await doctorAPI.uploadProfileImage(formData);
+      showSuccess('Profile image updated successfully');
+      
+      // Update the doctor state with new image
+      setDoctor(prev => ({
+        ...prev,
+        profile_image: response.data.profileImage
+      }));
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      
+      if (error.response?.status === 404) {
+        showError('Profile image upload not available. Please restart the backend server.');
+      } else if (error.response?.status === 500) {
+        showError('Server error. Please check backend logs.');
+      } else {
+        showError('Failed to upload profile image');
+      }
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   const handleCancel = () => {
@@ -109,7 +174,27 @@ const DoctorProfile = () => {
   if (!doctor) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">Profile not found</p>
+        <User className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Profile Not Found</h3>
+        <p className="text-gray-500 mb-4">
+          {apiError || 'Unable to load your profile information'}
+        </p>
+        {apiError && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4 max-w-md mx-auto">
+            <div className="text-sm text-red-800">
+              <strong>Error:</strong> {apiError}
+            </div>
+          </div>
+        )}
+        <div className="mt-4 text-sm text-gray-600">
+          <p>Please ensure you are logged in as a doctor.</p>
+          <button 
+            onClick={() => window.location.href = '/login'} 
+            className="mt-2 btn btn-primary"
+          >
+            Go to Login
+          </button>
+        </div>
       </div>
     );
   }
@@ -126,9 +211,49 @@ const DoctorProfile = () => {
         <div className="lg:col-span-1">
           <div className="card">
             <div className="text-center">
-              <div className="w-24 h-24 bg-primary-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <User className="h-12 w-12 text-primary-600" />
+              {/* Profile Image */}
+              <div className="relative inline-block">
+                <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden bg-gray-100">
+                  {doctor.profile_image ? (
+                    <img 
+                      src={doctor.profile_image} 
+                      alt={doctor.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name)}&background=0D8ABC&color=fff&size=128`;
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <User className="h-12 w-12 text-primary-600" />
+                    </div>
+                  )}
+                </div>
+                
+                {/* Upload Button */}
+                <button
+                  onClick={triggerFileInput}
+                  disabled={uploadingImage}
+                  className="absolute bottom-2 right-0 bg-primary-600 text-white p-2 rounded-full hover:bg-primary-700 transition-colors disabled:opacity-50"
+                  title="Change profile picture"
+                >
+                  {uploadingImage ? (
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
+                </button>
               </div>
+              
+              {/* Hidden File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              
               <h2 className="text-xl font-bold text-gray-900">{doctor.name}</h2>
               <p className="text-gray-600">{doctor.department_name}</p>
               

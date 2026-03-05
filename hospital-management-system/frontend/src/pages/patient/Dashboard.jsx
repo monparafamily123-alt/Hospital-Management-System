@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, CheckCircle, FileText, Heart, User } from 'lucide-react';
 import { patientAPI } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const PatientDashboard = () => {
   const [stats, setStats] = useState({
@@ -13,10 +14,19 @@ const PatientDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    fetchDashboardStats();
-  }, []);
+    console.log('🏥 Patient Dashboard - User:', user);
+    console.log('🏥 Patient Dashboard - Authenticated:', isAuthenticated);
+    
+    if (isAuthenticated && user?.role === 'patient') {
+      fetchDashboardStats();
+    } else {
+      console.log('❌ User is not authenticated or not a patient');
+      setLoading(false);
+    }
+  }, [user, isAuthenticated]);
 
   const fetchDashboardStats = async () => {
     try {
@@ -99,25 +109,25 @@ const PatientDashboard = () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
           <div className="space-y-3">
             <button 
-              onClick={() => navigate('/book-appointment')} 
+              onClick={() => navigate('/patient/book-appointment')} 
               className="w-full btn btn-primary"
             >
               Book New Appointment
             </button>
             <button 
-              onClick={() => navigate('/appointments')} 
+              onClick={() => navigate('/patient/appointments')} 
               className="w-full btn btn-secondary"
             >
               View My Appointments
             </button>
             <button 
-              onClick={() => navigate('/prescriptions')} 
+              onClick={() => navigate('/patient/prescriptions')} 
               className="w-full btn btn-secondary"
             >
               View Prescriptions
             </button>
             <button 
-              onClick={() => navigate('/profile')} 
+              onClick={() => navigate('/patient/profile')} 
               className="w-full btn btn-secondary"
             >
               Update Profile

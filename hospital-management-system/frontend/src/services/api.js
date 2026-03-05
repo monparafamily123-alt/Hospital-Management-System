@@ -48,12 +48,14 @@ api.interceptors.response.use(
       data: error.response?.data
     });
     
+    // Only logout on 401 (Unauthorized) errors
     if (error.response?.status === 401) {
-      console.log('🔐 Unauthorized - Redirecting to login');
+      console.log('🔐 Unauthorized - Clearing auth and redirecting to login');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
+    // Don't logout on network errors or other HTTP errors
     return Promise.reject(error);
   }
 );
@@ -132,10 +134,18 @@ export const doctorAPI = {
   getDashboardStats: () => api.get('/doctor/dashboard/stats'),
   getAppointments: () => api.get('/doctor/appointments'),
   getPrescriptions: () => api.get('/doctor/prescriptions'),
+  getProfile: () => api.get('/doctor/profile'),
   updateProfile: (profileData) => api.put('/doctor/profile', profileData),
+  uploadProfileImage: (formData) => {
+    console.log('📸 Uploading doctor profile image...');
+    return api.post('/doctor/profile/image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
   updatePrescription: (id, prescription) => api.put(`/doctor/appointments/${id}/prescription`, { prescription }),
   markAppointmentCompleted: (id) => api.put(`/doctor/appointments/${id}/complete`),
-  getProfile: () => api.get('/doctor/profile'),
 };
 
 export const patientAPI = {
@@ -146,7 +156,14 @@ export const patientAPI = {
   getDoctors: (departmentId) => api.get('/patient/doctors', { params: { departmentId } }),
   getDepartments: () => api.get('/patient/departments'),
   getProfile: () => api.get('/patient/profile'),
-  updateProfile: (profileData) => api.put('/patient/profile', profileData),
+  uploadProfileImage: (formData) => {
+    console.log('📸 Uploading patient profile image...');
+    return api.post('/patient/profile/image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 };
 
 export default api;

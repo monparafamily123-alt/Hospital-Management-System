@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, CheckCircle, Users, Stethoscope } from 'lucide-react';
 import { doctorAPI } from '../../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const DoctorDashboard = () => {
   const [stats, setStats] = useState({
@@ -10,6 +11,7 @@ const DoctorDashboard = () => {
     completedAppointments: 0,
   });
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardStats();
@@ -95,9 +97,24 @@ const DoctorDashboard = () => {
         <div className="card">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
           <div className="space-y-3">
-            <button className="w-full btn btn-primary">View All Appointments</button>
-            <button className="w-full btn btn-secondary">Manage Prescriptions</button>
-            <button className="w-full btn btn-secondary">Update Profile</button>
+            <button 
+              onClick={() => navigate('/doctor/appointments')} 
+              className="w-full btn btn-primary"
+            >
+              View All Appointments
+            </button>
+            <button 
+              onClick={() => navigate('/doctor/prescriptions')} 
+              className="w-full btn btn-secondary"
+            >
+              Manage Prescriptions
+            </button>
+            <button 
+              onClick={() => navigate('/doctor/profile')} 
+              className="w-full btn btn-secondary"
+            >
+              Update Profile
+            </button>
           </div>
         </div>
 

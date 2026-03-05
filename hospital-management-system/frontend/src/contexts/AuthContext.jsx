@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { authAPI } from '../services/api';
 import { setAuth, clearAuth, getUser } from '../utils/auth';
+import { debugAuth } from '../utils/debug-auth';
 
 const AuthContext = createContext();
 
@@ -15,7 +16,9 @@ const authReducer = (state, action) => {
     case 'LOGOUT':
       return { ...state, user: null, isAuthenticated: false, loading: false };
     case 'SET_USER':
-      return { ...state, user: action.payload, isAuthenticated: true };
+      return { ...state, loading: false, user: action.payload, isAuthenticated: true };
+    case 'INIT_COMPLETE':
+      return { ...state, loading: false };
     default:
       return state;
   }
@@ -32,17 +35,51 @@ export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   useEffect(() => {
-    const initAuth = async () => {
+    const initAuth = () => {
+      console.log('🚀 AuthContext: Initializing authentication...');
+      debugAuth(); // Debug current state
+      
       const token = localStorage.getItem('token');
-      if (token) {
+      const user = localStorage.getItem('user');
+      
+      console.log('🔍 Initializing auth...');
+      console.log('📝 Token exists:', !!token);
+      console.log('👤 User exists:', !!user);
+      
+      if (token && user) {
         try {
-          const response = await authAPI.getProfile();
-          dispatch({ type: 'SET_USER', payload: response.data });
+          // Parse user data from localStorage
+          const userData = JSON.parse(user);
+          console.log('✅ User data from localStorage:', userData);
+          
+          // Set user immediately without backend validation
+          dispatch({ type: 'SET_USER', payload: userData });
+          
+          // Optionally validate token in background without affecting UI
+          authAPI.getProfile()
+            .then(response => {
+              console.log('✅ Backend validation successful');
+              dispatch({ type: 'SET_USER', payload: response.data });
+              localStorage.setItem('user', JSON.stringify(response.data));
+            })
+            .catch(error => {
+              console.error('⚠️ Backend validation failed:', error);
+              // Only logout if it's a 401 error
+              if (error.response?.status === 401) {
+                console.log('🔐 Token invalid, logging out');
+                clearAuth();
+                dispatch({ type: 'LOGOUT' });
+              } else {
+                console.log('🌐 Network error, keeping user logged in');
+              }
+            });
         } catch (error) {
+          console.error('❌ Error parsing user data:', error);
           clearAuth();
           dispatch({ type: 'LOGOUT' });
         }
       } else {
+        console.log('❌ No auth data found');
         dispatch({ type: 'LOGOUT' });
       }
     };

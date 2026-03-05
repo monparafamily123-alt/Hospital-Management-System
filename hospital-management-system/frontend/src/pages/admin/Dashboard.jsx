@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, Calendar, Building, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { adminAPI } from '../../services/api';
 
 const AdminDashboard = () => {
@@ -13,6 +14,7 @@ const AdminDashboard = () => {
     completedAppointments: 0,
   });
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardStats();
@@ -144,9 +146,27 @@ const AdminDashboard = () => {
         <div className="card">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
           <div className="space-y-3">
-            <button className="w-full btn btn-primary">Add New Doctor</button>
-            <button className="w-full btn btn-secondary">Add New Department</button>
-            <button className="w-full btn btn-secondary">View All Appointments</button>
+            <button 
+              onClick={() => navigate('/admin/doctors')}
+              className="w-full btn btn-primary flex items-center justify-center hover:bg-primary-700 transition-colors"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add New Doctor
+            </button>
+            <button 
+              onClick={() => navigate('/admin/departments')}
+              className="w-full btn btn-secondary flex items-center justify-center hover:bg-gray-600 transition-colors"
+            >
+              <Building className="h-4 w-4 mr-2" />
+              Add New Department
+            </button>
+            <button 
+              onClick={() => navigate('/admin/appointments')}
+              className="w-full btn btn-secondary flex items-center justify-center hover:bg-gray-600 transition-colors"
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              View All Appointments
+            </button>
           </div>
         </div>
 

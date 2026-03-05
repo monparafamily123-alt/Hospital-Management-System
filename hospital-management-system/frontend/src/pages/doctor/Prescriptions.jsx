@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Calendar, User, Search, Filter, Plus, Eye, Download } from 'lucide-react';
 import { doctorAPI } from '../../services/api';
+import { downloadPrescriptionAsText } from '../../utils/pdf-generator';
 
 const Prescriptions = () => {
   const [prescriptions, setPrescriptions] = useState([]);
@@ -9,6 +10,24 @@ const Prescriptions = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedPrescription, setSelectedPrescription] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
+  // Function to download prescription as PDF
+  const downloadPrescriptionPDF = (prescription) => {
+    try {
+      console.log('📥 Downloading prescription PDF:', prescription);
+      
+      // Use the enhanced PDF generator
+      const success = downloadPrescriptionAsText(prescription);
+      
+      if (success) {
+        console.log('✅ Prescription downloaded successfully');
+      } else {
+        console.error('❌ Failed to download prescription');
+      }
+    } catch (error) {
+      console.error('❌ Error downloading prescription:', error);
+    }
+  };
 
   useEffect(() => {
     fetchPrescriptions();
@@ -189,6 +208,7 @@ const Prescriptions = () => {
                         <button
                           className="text-green-600 hover:text-green-900"
                           title="Download Prescription"
+                          onClick={() => downloadPrescriptionPDF(prescription)}
                         >
                           <Download className="h-4 w-4" />
                         </button>
@@ -259,7 +279,10 @@ const Prescriptions = () => {
               >
                 Close
               </button>
-              <button className="btn btn-primary flex items-center">
+              <button 
+                className="btn btn-primary flex items-center"
+                onClick={() => downloadPrescriptionPDF(selectedPrescription)}
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Download PDF
               </button>

@@ -5,6 +5,20 @@ import { ToastProvider } from './contexts/ToastContext';
 import Layout from './components/Layout';
 import Login from './components/Login';
 import Register from './components/Register';
+import './utils/global-debug'; // Load debug functions
+import './utils/test-patient-auth'; // Load patient test functions
+import './utils/patient-dashboard-test'; // Load patient dashboard tests
+import './utils/doctor-dashboard-test'; // Load doctor dashboard tests
+import './utils/doctor-dashboard-summary'; // Load doctor dashboard summary
+import './utils/debug-doctor-profile'; // Load doctor profile debug
+import './utils/doctor-profile-test'; // Load doctor profile tests
+import './utils/login-test-guide'; // Load login test guide
+import './utils/profile-image-test'; // Load profile image tests
+import './utils/prescription-form-guide'; // Load prescription form guide
+import './utils/prescription-display-fix'; // Load prescription display fix
+import './utils/pdf-generator'; // Load PDF generator
+import './utils/prescription-download-test'; // Load prescription download test
+import './utils/notification-system-test'; // Load notification system test
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
