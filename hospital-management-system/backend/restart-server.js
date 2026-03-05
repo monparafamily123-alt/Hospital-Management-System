@@ -1,0 +1,10 @@
+console.log('🔄 Restarting Backend Server...');
+console.log('📝 Please restart the backend server manually:');
+console.log('');
+console.log('1. Stop the current backend server (Ctrl+C in terminal)');
+console.log('2. Run: npm start');
+console.log('3. Wait for server to start on port 5000');
+console.log('4. Try uploading profile image again');
+console.log('');
+console.log('🔧 The new upload routes need a server restart to be loaded.');
+console.log('✅ After restart, the profile image upload should work.');

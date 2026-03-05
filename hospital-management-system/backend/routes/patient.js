@@ -2,6 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const PatientController = require('../controllers/patientController');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
+const { uploadProfileImage, getImageUrl, deleteOldImage } = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -21,5 +22,6 @@ router.get('/prescriptions', PatientController.getPrescriptionHistory);
 router.get('/doctors', PatientController.getAvailableDoctors);
 router.get('/departments', PatientController.getDepartments);
 router.get('/profile', PatientController.getProfile);
+router.post('/profile/image', uploadProfileImage, PatientController.uploadProfileImage);
 
 module.exports = router;
