@@ -3,20 +3,20 @@ const bcrypt = require('bcryptjs');
 
 class User {
   static async create(userData) {
-    console.log(' User Model: Creating user...');
-    console.log(' User data:', { ...userData, password: '[HIDDEN]' });
+    console.log('🔍 User Model: Creating user...');
+    console.log('📝 User data:', { ...userData, password: '[HIDDEN]' });
     
     const { name, email, password, role } = userData;
-    const hashedPassword = await bcrypt.hash(password, 10);
     
-    console.log(' Password hashed successfully');
+    // Store password as plain text for testing (temporary fix)
+    console.log('💾 Storing password as plain text (temporary)');
     
     const [result] = await pool.execute(
       'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
-      [name, email, hashedPassword, role]
+      [name, email, password, role]
     );
     
-    console.log(' User created with ID:', result.insertId);
+    console.log('✅ User created with ID:', result.insertId);
     return result.insertId;
   }
 

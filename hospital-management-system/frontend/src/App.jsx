@@ -19,6 +19,9 @@ import './utils/prescription-display-fix'; // Load prescription display fix
 import './utils/pdf-generator'; // Load PDF generator
 import './utils/prescription-download-test'; // Load prescription download test
 import './utils/notification-system-test'; // Load notification system test
+import './utils/registration-debug'; // Load registration debug
+import './utils/login-debug-advanced'; // Load advanced login debug
+import './utils/frontend-debug'; // Load frontend debug
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
