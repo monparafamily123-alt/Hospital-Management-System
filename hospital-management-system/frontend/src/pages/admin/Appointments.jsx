@@ -180,7 +180,10 @@ const Appointments = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500">
-                        {new Date(appointment.appointment_date).toLocaleString()}
+                        {appointment.date && appointment.time 
+                          ? `${new Date(appointment.date).toLocaleDateString()} at ${appointment.time}`
+                          : 'Date not available'
+                        }
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

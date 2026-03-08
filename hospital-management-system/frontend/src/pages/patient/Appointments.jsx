@@ -95,7 +95,10 @@ const PatientAppointments = () => {
                       <div className="flex items-center">
                         <Calendar className="h-5 w-5 text-gray-600 mr-2" />
                         <div className="text-sm text-gray-500">
-                          {new Date(appointment.appointment_date).toLocaleString()}
+                          {appointment.date && appointment.time 
+                            ? `${new Date(appointment.date).toLocaleDateString()} at ${appointment.time}`
+                            : 'Date not available'
+                          }
                         </div>
                       </div>
                     </td>

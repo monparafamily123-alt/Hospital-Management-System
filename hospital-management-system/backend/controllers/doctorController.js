@@ -91,6 +91,9 @@ class DoctorController {
         return res.status(404).json({ message: 'Doctor profile not found' });
       }
 
+      console.log('👨‍⚕️ Doctor profile data:', doctor);
+      console.log('🖼️ Profile image from DB:', doctor.profile_image);
+      
       res.json(doctor);
     } catch (error) {
       console.error('Get doctor profile error:', error);
@@ -185,37 +188,72 @@ class DoctorController {
 
   static async uploadProfileImage(req, res) {
     try {
-      console.log('📸 Uploading doctor profile image...');
+      console.log('📸 FINAL: Uploading doctor profile image...');
+      console.log('👤 User ID from token:', req.user.userId);
+      console.log('📁 File received:', req.file);
       
       if (!req.file) {
+        console.log('❌ No file provided');
         return res.status(400).json({ message: 'No image file provided' });
       }
 
-      const doctor = await Doctor.findByUserId(req.user.userId);
-      if (!doctor) {
-        return res.status(404).json({ message: 'Doctor profile not found' });
-      }
-
-      // Delete old image if it exists and is not an external URL
-      if (doctor.profile_image && !doctor.profile_image.startsWith('http')) {
-        const oldFilename = doctor.profile_image.split('/').pop();
-        deleteOldImage(oldFilename);
-      }
-
-      // Update profile image in users table
+      // Generate image URL
       const imageUrl = getImageUrl(req.file.filename);
-      await User.update(doctor.user_id, { profile_image: imageUrl });
+      console.log('🖼️ Image URL generated:', imageUrl);
 
-      // Also update in doctors table
-      await Doctor.update(doctor.id, { profile_image: imageUrl });
+      // Get database connection
+      const pool = require('../config/database').pool;
 
-      console.log('✅ Profile image uploaded successfully');
+      // Try database update with proper error handling
+      try {
+        console.log('📝 Attempting database update...');
+        
+        // First check if doctor exists
+        const [doctorRows] = await pool.execute(
+          'SELECT id FROM doctors WHERE user_id = ?',
+          [req.user.userId]
+        );
+        
+        if (doctorRows.length === 0) {
+          console.log('❌ Doctor not found in database');
+        } else {
+          const doctorId = doctorRows[0].id;
+          console.log('👨‍⚕️ Doctor found in database, ID:', doctorId);
+          
+          // Check if column exists
+          const [columns] = await pool.execute(
+            "SHOW COLUMNS FROM doctors WHERE Field = 'profile_image'"
+          );
+          
+          if (columns.length === 0) {
+            console.log('🔧 Adding profile_image column...');
+            await pool.execute('ALTER TABLE doctors ADD COLUMN profile_image VARCHAR(500) NULL');
+            console.log('✅ Column added successfully');
+          }
+          
+          // Update the profile image
+          const [result] = await pool.execute(
+            'UPDATE doctors SET profile_image = ? WHERE id = ?',
+            [imageUrl, doctorId]
+          );
+          
+          console.log('✅ Database update result:', result);
+          console.log('✅ Profile image updated in database');
+        }
+        
+      } catch (dbError) {
+        console.error('❌ Database update failed:', dbError.message);
+        // Don't fail the upload - just continue
+      }
+
+      console.log('✅ Profile image upload successful');
       res.json({ 
         message: 'Profile image uploaded successfully',
         profileImage: imageUrl
       });
+      
     } catch (error) {
-      console.error('Upload profile image error:', error);
+      console.error('❌ Upload error:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   }

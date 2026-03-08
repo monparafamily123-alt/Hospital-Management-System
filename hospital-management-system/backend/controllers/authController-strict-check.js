@@ -56,6 +56,56 @@ class AuthControllerStrictCheck {
     }
   }
 
+  static async updateProfile(req, res) {
+    try {
+      console.log('🔍 Profile update request:', req.body);
+      console.log('👤 User ID from token:', req.user.userId);
+      
+      const userId = req.user.userId;
+      const { name, email } = req.body;
+      
+      // Check if user exists
+      const user = await User.findById(userId);
+      if (!user) {
+        console.log('❌ User not found for profile update:', userId);
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      // Update user profile
+      const updateData = {};
+      if (name) updateData.name = name;
+      if (email) updateData.email = email;
+      
+      console.log('📝 Update data:', updateData);
+      
+      const [result] = await pool.execute(
+        'UPDATE users SET name = COALESCE(?, name), email = COALESCE(?, email), updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [name || null, email || null, userId]
+      );
+      
+      console.log('✅ Profile updated successfully for user:', userId);
+      console.log('📊 Update result:', result);
+      
+      // Get updated user data
+      const updatedUser = await User.findById(userId);
+      
+      res.json({
+        message: 'Profile updated successfully',
+        user: {
+          id: updatedUser.id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          updated_at: updatedUser.updated_at
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Profile update error:', error);
+      res.status(500).json({ message: 'Failed to update profile. Please try again.' });
+    }
+  }
+
   static async getProfile(req, res) {
     try {
       console.log('🔍 STRICT PROFILE CHECK for user ID:', req.user.userId);
@@ -64,7 +114,7 @@ class AuthControllerStrictCheck {
       
       if (!user) {
         console.log('❌ User NOT found in database during profile check:', req.user.userId);
-        // Clear the token by returning 401
+        // Clear token by returning 401
         return res.status(401).json({ message: 'User not found' });
       }
 

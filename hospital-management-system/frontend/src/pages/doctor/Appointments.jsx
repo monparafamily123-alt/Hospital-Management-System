@@ -9,14 +9,50 @@ const DoctorAppointments = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [prescriptionData, setPrescriptionData] = useState({
-    medicines: '',
-    dosage: '',
-    frequency: '',
-    duration: '',
-    instructions: '',
+    medicines: [
+      { name: '', dosage: '', frequency: '', duration: '', instructions: '' },
+      { name: '', dosage: '', frequency: '', duration: '', instructions: '' },
+      { name: '', dosage: '', frequency: '', duration: '', instructions: '' },
+      { name: '', dosage: '', frequency: '', duration: '', instructions: '' },
+      { name: '', dosage: '', frequency: '', duration: '', instructions: '' }
+    ],
     followUp: ''
   });
   const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
+
+  // Function to handle medicine field changes
+  const handleMedicineChange = (index, field, value) => {
+    const updatedMedicines = [...prescriptionData.medicines];
+    updatedMedicines[index][field] = value;
+    setPrescriptionData({...prescriptionData, medicines: updatedMedicines});
+  };
+
+  // Function to handle tab key press for adding new row
+  const handleTabKeyPress = (e, index, field) => {
+    if (e.key === 'Tab' && index === prescriptionData.medicines.length - 1 && field === 'instructions') {
+      e.preventDefault();
+      addNewRow();
+    }
+  };
+
+  // Function to add new row
+  const addNewRow = () => {
+    setPrescriptionData({
+      ...prescriptionData,
+      medicines: [
+        ...prescriptionData.medicines,
+        { name: '', dosage: '', frequency: '', duration: '', instructions: '' }
+      ]
+    });
+  };
+
+  // Function to remove row
+  const removeRow = (index) => {
+    if (prescriptionData.medicines.length > 1) {
+      const updatedMedicines = prescriptionData.medicines.filter((_, i) => i !== index);
+      setPrescriptionData({...prescriptionData, medicines: updatedMedicines});
+    }
+  };
 
   useEffect(() => {
     fetchAppointments();
@@ -24,10 +60,13 @@ const DoctorAppointments = () => {
 
   const fetchAppointments = async () => {
     try {
+      console.log('👨‍⚕️ Fetching doctor appointments...');
       const response = await doctorAPI.getAppointments();
-      setAppointments(response.data);
+      console.log('✅ Doctor appointments API response:', response);
+      console.log('📊 Appointments data:', response.data);
+      setAppointments(response.data || []);
     } catch (error) {
-      console.error('Error fetching appointments:', error);
+      console.error('❌ Error fetching appointments:', error);
     } finally {
       setLoading(false);
     }
@@ -36,11 +75,13 @@ const DoctorAppointments = () => {
   const handleAddPrescription = (appointment) => {
     setSelectedAppointment(appointment);
     setPrescriptionData({
-      medicines: '',
-      dosage: '',
-      frequency: '',
-      duration: '',
-      instructions: '',
+      medicines: [
+        { name: '', dosage: '', frequency: '', duration: '', instructions: '' },
+        { name: '', dosage: '', frequency: '', duration: '', instructions: '' },
+        { name: '', dosage: '', frequency: '', duration: '', instructions: '' },
+        { name: '', dosage: '', frequency: '', duration: '', instructions: '' },
+        { name: '', dosage: '', frequency: '', duration: '', instructions: '' }
+      ],
       followUp: ''
     });
     setShowPrescriptionModal(true);
@@ -49,16 +90,15 @@ const DoctorAppointments = () => {
   const handleSavePrescription = async () => {
     try {
       // Create formatted prescription text from structured data
+      const medicinesList = prescriptionData.medicines
+        .filter(med => med.name.trim() !== '')
+        .map((med, index) => 
+          `${index + 1}. ${med.name} - ${med.dosage} - ${med.frequency} - ${med.duration} - ${med.instructions}`
+        ).join('\n');
+
       const formattedPrescription = `
 MEDICINES:
-${prescriptionData.medicines}
-
-DOSAGE: ${prescriptionData.dosage}
-FREQUENCY: ${prescriptionData.frequency}
-DURATION: ${prescriptionData.duration}
-
-INSTRUCTIONS:
-${prescriptionData.instructions}
+${medicinesList}
 
 FOLLOW-UP: ${prescriptionData.followUp || 'Not required'}
       `.trim();
@@ -68,11 +108,13 @@ FOLLOW-UP: ${prescriptionData.followUp || 'Not required'}
       setShowPrescriptionModal(false);
       setSelectedAppointment(null);
       setPrescriptionData({
-        medicines: '',
-        dosage: '',
-        frequency: '',
-        duration: '',
-        instructions: '',
+        medicines: [
+          { name: '', dosage: '', frequency: '', duration: '', instructions: '' },
+          { name: '', dosage: '', frequency: '', duration: '', instructions: '' },
+          { name: '', dosage: '', frequency: '', duration: '', instructions: '' },
+          { name: '', dosage: '', frequency: '', duration: '', instructions: '' },
+          { name: '', dosage: '', frequency: '', duration: '', instructions: '' }
+        ],
         followUp: ''
       });
     } catch (error) {
@@ -108,6 +150,10 @@ FOLLOW-UP: ${prescriptionData.followUp || 'Not required'}
     appointment.patient_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     appointment.patient_email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  
+  console.log('🔍 Search term:', searchTerm);
+  console.log('📊 Total appointments:', appointments.length);
+  console.log('👤 Filtered appointments:', filteredAppointments.length);
 
   if (loading) {
     return (
@@ -190,7 +236,10 @@ FOLLOW-UP: ${prescriptionData.followUp || 'Not required'}
                       <div className="flex items-center">
                         <Calendar className="h-5 w-5 text-gray-400 mr-2" />
                         <div className="text-sm text-gray-500">
-                          {new Date(appointment.appointment_date).toLocaleString()}
+                          {appointment.date && appointment.time 
+                            ? `${new Date(appointment.date).toLocaleDateString()} at ${appointment.time}`
+                            : 'Date not available'
+                          }
                         </div>
                       </div>
                     </td>
@@ -241,112 +290,149 @@ FOLLOW-UP: ${prescriptionData.followUp || 'Not required'}
 
       {showPrescriptionModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white max-h-[80vh] overflow-y-auto">
+          <div className="relative top-10 mx-auto p-5 border w-[800px] shadow-lg rounded-md bg-white max-h-[80vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-gray-900 mb-4">
               Add Prescription for {selectedAppointment?.patient_name}
             </h3>
-            <div className="space-y-4">
-              {/* Medicines */}
-              <FormField
-                label="Medicines"
-                name="medicines"
-                type="textarea"
-                rows="3"
-                placeholder="e.g., Paracetamol 500mg, Amoxicillin 250mg"
-                value={prescriptionData.medicines}
-                onChange={(e) => setPrescriptionData({...prescriptionData, medicines: e.target.value})}
-                helpText="List all prescribed medicines"
-                icon={FileText}
-              />
-
-              {/* Dosage and Frequency in same row */}
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  label="Dosage"
-                  name="dosage"
-                  type="text"
-                  placeholder="e.g., 1 tablet, 2 tsp"
-                  value={prescriptionData.dosage}
-                  onChange={(e) => setPrescriptionData({...prescriptionData, dosage: e.target.value})}
-                  helpText="Amount per dose"
-                  icon={FileText}
-                />
-                
-                <FormField
-                  label="Frequency"
-                  name="frequency"
-                  type="text"
-                  placeholder="e.g., 3 times a day, twice daily"
-                  value={prescriptionData.frequency}
-                  onChange={(e) => setPrescriptionData({...prescriptionData, frequency: e.target.value})}
-                  helpText="How often to take"
-                  icon={Clock}
-                />
+            
+            {/* Prescription Table */}
+            <div className="mb-6">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Medicine Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Dosage
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Taking Time
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Duration
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Instructions
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {prescriptionData.medicines.map((medicine, index) => (
+                    <tr key={index}>
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        <input
+                          type="text"
+                          className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                          placeholder="e.g., Paracetamol 500mg"
+                          value={medicine.name}
+                          onChange={(e) => handleMedicineChange(index, 'name', e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        <input
+                          type="text"
+                          className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                          placeholder="e.g., 1 tablet"
+                          value={medicine.dosage}
+                          onChange={(e) => handleMedicineChange(index, 'dosage', e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        <input
+                          type="text"
+                          className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                          placeholder="e.g., 3 times a day"
+                          value={medicine.frequency}
+                          onChange={(e) => handleMedicineChange(index, 'frequency', e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        <input
+                          type="text"
+                          className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                          placeholder="e.g., 5 days"
+                          value={medicine.duration}
+                          onChange={(e) => handleMedicineChange(index, 'duration', e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        <input
+                          type="text"
+                          className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                          placeholder="e.g., Take after food"
+                          value={medicine.instructions}
+                          onChange={(e) => handleMedicineChange(index, 'instructions', e.target.value)}
+                          onKeyDown={(e) => handleTabKeyPress(e, index, 'instructions')}
+                        />
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        <button
+                          onClick={() => removeRow(index)}
+                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          disabled={prescriptionData.medicines.length === 1}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              
+              {/* Add Row Button */}
+              <div className="mt-4">
+                <button
+                  onClick={addNewRow}
+                  className="btn btn-secondary text-sm"
+                >
+                  + Add Medicine Row
+                </button>
               </div>
+            </div>
 
-              {/* Duration */}
-              <FormField
-                label="Duration"
-                name="duration"
+            {/* Follow-up Section */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Follow-up Required
+              </label>
+              <input
                 type="text"
-                placeholder="e.g., 5 days, 1 week, 2 weeks"
-                value={prescriptionData.duration}
-                onChange={(e) => setPrescriptionData({...prescriptionData, duration: e.target.value})}
-                helpText="How long to continue medication"
-                icon={Calendar}
-              />
-
-              {/* Instructions */}
-              <FormField
-                label="Instructions"
-                name="instructions"
-                type="textarea"
-                rows="3"
-                placeholder="e.g., Take after food, avoid dairy products, complete full course"
-                value={prescriptionData.instructions}
-                onChange={(e) => setPrescriptionData({...prescriptionData, instructions: e.target.value})}
-                helpText="Special instructions for the patient"
-                icon={FileText}
-              />
-
-              {/* Follow-up */}
-              <FormField
-                label="Follow-up Required"
-                name="followUp"
-                type="text"
-                placeholder="e.g., After 1 week, After 5 days, Not required"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="e.g., After 1 week, Not required"
                 value={prescriptionData.followUp}
                 onChange={(e) => setPrescriptionData({...prescriptionData, followUp: e.target.value})}
-                helpText="When should the patient visit again"
-                icon={Calendar}
               />
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-3 pt-4 border-t">
-                <button
-                  onClick={() => {
-                    setShowPrescriptionModal(false);
-                    setSelectedAppointment(null);
-                    setPrescriptionData({
-                      medicines: '',
-                      dosage: '',
-                      frequency: '',
-                      duration: '',
-                      instructions: '',
-                      followUp: ''
-                    });
-                  }}
-                  className="btn btn-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSavePrescription}
-                  className="btn btn-primary"
-                >
-                  Save Prescription
-                </button>
-              </div>
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <button
+                onClick={() => {
+                  setShowPrescriptionModal(false);
+                  setSelectedAppointment(null);
+                  setPrescriptionData({
+                    medicines: '',
+                    dosage: '',
+                    frequency: '',
+                    duration: '',
+                    instructions: '',
+                    followUp: ''
+                  });
+                }}
+                className="btn btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSavePrescription}
+                className="btn btn-primary"
+              >
+                Save Prescription
+              </button>
             </div>
           </div>
         </div>

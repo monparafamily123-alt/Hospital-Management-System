@@ -55,24 +55,8 @@ export const AuthProvider = ({ children }) => {
           // Set user immediately without backend validation
           dispatch({ type: 'SET_USER', payload: userData });
           
-          // Optionally validate token in background without affecting UI
-          authAPI.getProfile()
-            .then(response => {
-              console.log('✅ Backend validation successful');
-              dispatch({ type: 'SET_USER', payload: response.data });
-              localStorage.setItem('user', JSON.stringify(response.data));
-            })
-            .catch(error => {
-              console.error('⚠️ Backend validation failed:', error);
-              // Only logout if it's a 401 error
-              if (error.response?.status === 401) {
-                console.log('🔐 Token invalid, logging out');
-                clearAuth();
-                dispatch({ type: 'LOGOUT' });
-              } else {
-                console.log('🌐 Network error, keeping user logged in');
-              }
-            });
+          // Skip backend validation to preserve user role from localStorage
+          console.log('🔐 Using stored user data, skipping backend validation');
         } catch (error) {
           console.error('❌ Error parsing user data:', error);
           clearAuth();

@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 
@@ -13,7 +12,9 @@ const patientRoutes = require('./routes/patient');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(helmet());
+// Serve static files first
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use(cors());
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
@@ -23,9 +24,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/doctor', doctorRoutes);
 app.use('/api/patient', patientRoutes);
-
-// Serve static files (profile images)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Hospital Management System API is running' });
@@ -41,7 +39,9 @@ app.use((error, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log('🚀 Server starting...');
+  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`📁 Uploads: http://localhost:${PORT}/uploads/`);
   console.log('🌐 Environment:', process.env.NODE_ENV || 'development');
   console.log('🔗 Database:', {
     host: process.env.DB_HOST,

@@ -44,6 +44,9 @@ const DoctorProfile = () => {
       setApiError(null);
       const response = await doctorAPI.getProfile();
       console.log('✅ Doctor profile response:', response);
+      console.log('🖼️ Profile image from API:', response.data.profile_image);
+      
+      // Set doctor data with profile image
       setDoctor(response.data);
       setFormData({
         name: response.data.name || '',
@@ -55,6 +58,10 @@ const DoctorProfile = () => {
         qualification: response.data.qualification || '',
         consultationFee: response.data.consultation_fee || '',
       });
+      
+      // Log final doctor state
+      console.log('🔄 Final doctor state:', response.data);
+      
     } catch (error) {
       console.error('❌ Error fetching profile:', error);
       setApiError(error.response?.data?.message || 'Failed to fetch profile');
@@ -94,11 +101,32 @@ const DoctorProfile = () => {
       const response = await doctorAPI.uploadProfileImage(formData);
       showSuccess('Profile image updated successfully');
       
-      // Update the doctor state with new image
+      console.log('🖼️ Upload response:', response.data);
+      console.log('🖼️ Profile image URL:', response.data.profileImage);
+      
+      // Update the doctor state with new image (remove duplicate localhost)
+      const imageUrl = response.data.profileImage.replace('http://localhost:5000', '');
+      console.log('🖼️ Cleaned image URL:', imageUrl);
+      
+      // Update doctor state immediately
       setDoctor(prev => ({
         ...prev,
-        profile_image: response.data.profileImage
+        profile_image: imageUrl
       }));
+      
+      console.log('🔄 Updated doctor state:', imageUrl);
+      
+      // Also fetch fresh profile data after a short delay
+      setTimeout(async () => {
+        try {
+          const freshProfile = await doctorAPI.getProfile();
+          console.log('🔄 Fresh profile data:', freshProfile.data);
+          setDoctor(freshProfile.data);
+        } catch (fetchError) {
+          console.error('❌ Error fetching fresh profile:', fetchError);
+        }
+      }, 1000);
+      
     } catch (error) {
       console.error('Error uploading image:', error);
       
@@ -143,12 +171,41 @@ const DoctorProfile = () => {
     
     try {
       console.log('🔄 Updating doctor profile...');
+      console.log('📝 Form data being sent:', formData);
+      
       const response = await doctorAPI.updateProfile(formData);
       console.log('✅ Profile update response:', response);
       
-      showSuccess('Profile updated successfully!');
-      setEditing(false);
-      fetchProfile(); // Refresh profile data
+      if (response.data.success) {
+        showSuccess('Profile updated successfully!');
+        setEditing(false);
+        
+        // Update local state immediately with the response data
+        if (response.data.doctor) {
+          console.log('🔄 Updating local state with:', response.data.doctor);
+          setDoctor(response.data.doctor);
+          
+          // Also update form data
+          setFormData({
+            name: response.data.doctor.name || '',
+            email: response.data.doctor.email || '',
+            phone: response.data.doctor.phone || '',
+            address: response.data.doctor.address || '',
+            experience: response.data.doctor.experience || '',
+            availableTime: response.data.doctor.available_time || '',
+            qualification: response.data.doctor.qualification || '',
+            consultationFee: response.data.doctor.consultation_fee || '',
+          });
+        }
+        
+        // DON'T refresh profile data - use the updated data from response
+        // setTimeout(() => {
+        //   fetchProfile();
+        // }, 500);
+      } else {
+        setError('Profile update failed');
+        showError('Profile update failed');
+      }
     } catch (error) {
       console.error('❌ Error updating profile:', error);
       setError('Failed to update profile. Please try again.');
@@ -216,11 +273,15 @@ const DoctorProfile = () => {
                 <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden bg-gray-100">
                   {doctor.profile_image ? (
                     <img 
-                      src={doctor.profile_image} 
+                      src={`http://localhost:5000${doctor.profile_image}`} 
                       alt={doctor.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
+                        console.log('❌ Image load error:', doctor.profile_image);
                         e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name)}&background=0D8ABC&color=fff&size=128`;
+                      }}
+                      onLoad={() => {
+                        console.log('✅ Image loaded successfully:', doctor.profile_image);
                       }}
                     />
                   ) : (
