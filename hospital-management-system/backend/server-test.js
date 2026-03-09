@@ -13,20 +13,103 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Global appointments storage (accessible by all endpoints)
-let appointments = [
-  {
-    id: 1,
-    doctor_name: 'Dr. Sahil Kumar',
-    doctor_specialization: 'General Medicine',
-    date: '2026-03-06',
-    time: '10:00 AM',
-    status: 'completed',
-    reason: 'For Checkup',
-    symptoms: 'Regular health checkup',
-    created_at: '2026-03-06T05:40:03.000Z'
+// File-based storage functions
+const DATA_FILE = path.join(__dirname, 'data.json');
+
+// Initialize data file if it doesn't exist
+function initializeDataFile() {
+  if (!fs.existsSync(DATA_FILE)) {
+    const initialData = {
+      doctors: [
+        {
+          id: 17,
+          name: 'Dr. Sahil Kumar',
+          email: 'sahildoctor@gmail.com',
+          phone: '1234567890',
+          specialization: 'General Medicine',
+          experience: '5 years',
+          qualification: 'MBBS',
+          consultation_fee: 500,
+          available_time: '9am - 5pm',
+          status: 'active',
+          created_at: '2026-03-06T05:39:02.000Z'
+        },
+        {
+          id: 18,
+          name: 'Dr. Priya Sharma',
+          email: 'priya.sharma@hospital.com',
+          phone: '9876543210',
+          specialization: 'Cardiology',
+          experience: '8 years',
+          qualification: 'MD',
+          consultation_fee: 800,
+          available_time: '10am - 6pm',
+          status: 'active',
+          created_at: '2026-03-06T05:39:02.000Z'
+        },
+        {
+          id: 19,
+          name: 'Dr. Rahul Verma',
+          email: 'rahul.verma@hospital.com',
+          phone: '9876543211',
+          specialization: 'Orthopedics',
+          experience: '6 years',
+          qualification: 'MS',
+          consultation_fee: 600,
+          available_time: '8am - 4pm',
+          status: 'active',
+          created_at: '2026-03-06T05:39:02.000Z'
+        },
+        {
+          id: 20,
+          name: 'Dr. Anjali Patel',
+          email: 'anjali.patel@hospital.com',
+          phone: '9876543212',
+          specialization: 'Pediatrics',
+          experience: '7 years',
+          qualification: 'MD',
+          consultation_fee: 700,
+          available_time: '9am - 5pm',
+          status: 'active',
+          created_at: '2026-03-06T05:39:02.000Z'
+        }
+      ],
+      patients: [],
+      appointments: []
+    };
+    fs.writeFileSync(DATA_FILE, JSON.stringify(initialData, null, 2));
+    return initialData;
   }
-];
+  return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+}
+
+// Read data from file
+function readData() {
+  try {
+    return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+  } catch (error) {
+    console.error('❌ Error reading data file:', error);
+    return initializeDataFile();
+  }
+}
+
+// Write data to file
+function writeData(data) {
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    return true;
+  } catch (error) {
+    console.error('❌ Error writing data file:', error);
+    return false;
+  }
+}
+
+// Initialize data file on server start
+let database = initializeDataFile();
+console.log('📁 Database initialized from file:', DATA_FILE);
+
+// Global appointments storage (now from file)
+let appointments = database.appointments || [];
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -464,145 +547,118 @@ app.delete('/api/admin/departments/:id', (req, res) => {
   });
 });
 
-// Admin doctors list endpoint
+// Global doctors array for in-memory storage
+let doctors = [
+  {
+    id: 17,
+    name: 'Dr. Sahil Kumar',
+    email: 'sahildoctor@gmail.com',
+    phone: '1234567890',
+    specialization: 'General Medicine',
+    experience: '5 years',
+    qualification: 'MBBS',
+    consultation_fee: 500,
+    available_time: '9am - 5pm',
+    status: 'active',
+    created_at: '2026-03-06T05:39:02.000Z'
+  },
+  {
+    id: 18,
+    name: 'Dr. Priya Sharma',
+    email: 'priya.sharma@hospital.com',
+    phone: '9876543210',
+    specialization: 'Cardiology',
+    experience: '8 years',
+    qualification: 'MD',
+    consultation_fee: 800,
+    available_time: '10am - 6pm',
+    status: 'active',
+    created_at: '2026-03-06T05:39:02.000Z'
+  },
+  {
+    id: 19,
+    name: 'Dr. Rahul Verma',
+    email: 'rahul.verma@hospital.com',
+    phone: '9876543211',
+    specialization: 'Orthopedics',
+    experience: '6 years',
+    qualification: 'MS',
+    consultation_fee: 600,
+    available_time: '8am - 4pm',
+    status: 'active',
+    created_at: '2026-03-06T05:39:02.000Z'
+  },
+  {
+    id: 20,
+    name: 'Dr. Anjali Patel',
+    email: 'anjali.patel@hospital.com',
+    phone: '9876543212',
+    specialization: 'Pediatrics',
+    experience: '7 years',
+    qualification: 'MD',
+    consultation_fee: 700,
+    available_time: '9am - 5pm',
+    status: 'active',
+    created_at: '2026-03-06T05:39:02.000Z'
+  }
+];
+
+// Admin doctors list endpoint (updated to use file-based storage)
 app.get('/api/admin/doctors', (req, res) => {
   console.log('👨‍⚕️ Admin doctors list requested...');
+  const data = readData();
+  console.log('📊 Total doctors in system:', data.doctors.length);
+  res.json(data.doctors);
+});
+
+// Admin create doctor endpoint (updated to use file-based storage)
+app.post('/api/admin/doctors', (req, res) => {
+  console.log('➕ Admin creating doctor...');
+  console.log('📝 Doctor data:', req.body);
   
-  const doctors = [
-    {
-      id: 17,
-      name: 'Dr. Sahil Kumar',
-      email: 'sahildoctor@gmail.com',
-      phone: '1234567890',
-      specialization: 'General Medicine',
-      experience: '5 years',
-      qualification: 'MBBS',
-      consultation_fee: 500,
-      available_time: '9am - 5pm',
-      status: 'active',
-      created_at: '2026-03-06T05:39:02.000Z'
-    },
-    {
-      id: 18,
-      name: 'Dr. Priya Sharma',
-      email: 'priya.sharma@hospital.com',
-      phone: '9876543210',
-      specialization: 'Cardiology',
-      experience: '8 years',
-      qualification: 'MD',
-      consultation_fee: 800,
-      available_time: '10am - 6pm',
-      status: 'active',
-      created_at: '2026-03-06T05:39:02.000Z'
-    },
-    {
-      id: 19,
-      name: 'Dr. Rahul Verma',
-      email: 'rahul.verma@hospital.com',
-      phone: '9876543211',
-      specialization: 'Orthopedics',
-      experience: '6 years',
-      qualification: 'MS',
-      consultation_fee: 600,
-      available_time: '8am - 4pm',
-      status: 'active',
-      created_at: '2026-03-06T05:39:02.000Z'
-    },
-    {
-      id: 20,
-      name: 'Dr. Anjali Patel',
-      email: 'anjali.patel@hospital.com',
-      phone: '9876543212',
-      specialization: 'Pediatrics',
-      experience: '7 years',
-      qualification: 'MD',
-      consultation_fee: 700,
-      available_time: '9am - 5pm',
-      status: 'active',
-      created_at: '2026-03-06T05:39:02.000Z'
-    },
-    {
-      id: 21,
-      name: 'Dr. Amit Singh',
-      email: 'amit.singh@hospital.com',
-      phone: '9876543213',
-      specialization: 'Neurology',
-      experience: '10 years',
-      qualification: 'DM',
-      consultation_fee: 1000,
-      available_time: '10am - 6pm',
-      status: 'active',
-      created_at: '2026-03-06T05:39:02.000Z'
-    },
-    {
-      id: 22,
-      name: 'Dr. Neha Gupta',
-      email: 'neha.gupta@hospital.com',
-      phone: '9876543214',
-      specialization: 'Gynecology',
-      experience: '5 years',
-      qualification: 'MS',
-      consultation_fee: 600,
-      available_time: '8am - 4pm',
-      status: 'active',
-      created_at: '2026-03-06T05:39:02.000Z'
-    },
-    {
-      id: 23,
-      name: 'Dr. Vikram Rao',
-      email: 'vikram.rao@hospital.com',
-      phone: '9876543215',
-      specialization: 'Dermatology',
-      experience: '4 years',
-      qualification: 'MD',
-      consultation_fee: 500,
-      available_time: '9am - 5pm',
-      status: 'active',
-      created_at: '2026-03-06T05:39:02.000Z'
-    },
-    {
-      id: 24,
-      name: 'Dr. Kavita Reddy',
-      email: 'kavita.reddy@hospital.com',
-      phone: '9876543216',
-      specialization: 'Ophthalmology',
-      experience: '6 years',
-      qualification: 'MS',
-      consultation_fee: 700,
-      available_time: '10am - 6pm',
-      status: 'active',
-      created_at: '2026-03-06T05:39:02.000Z'
-    },
-    {
-      id: 25,
-      name: 'Dr. Rajesh Kumar',
-      email: 'rajesh.kumar@hospital.com',
-      phone: '9876543217',
-      specialization: 'ENT',
-      experience: '8 years',
-      qualification: 'MS',
-      consultation_fee: 600,
-      available_time: '8am - 4pm',
-      status: 'active',
-      created_at: '2026-03-06T05:39:02.000Z'
-    },
-    {
-      id: 26,
-      name: 'Dr. Meera Joshi',
-      email: 'meera.joshi@hospital.com',
-      phone: '9876543218',
-      specialization: 'Psychiatry',
-      experience: '5 years',
-      qualification: 'MD',
-      consultation_fee: 800,
-      available_time: '9am - 5pm',
-      status: 'active',
-      created_at: '2026-03-06T05:39:02.000Z'
-    }
-  ];
+  const { name, email, password, departmentId, experience, availableTime, qualification, consultationFee } = req.body;
   
-  console.log('👨‍⚕️ Returning doctors list:', doctors.length);
-  res.json(doctors);
+  if (!name || !email || !password) {
+    return res.status(400).json({
+      message: 'Name, email, and password are required'
+    });
+  }
+  
+  // Read current data
+  const data = readData();
+  
+  const newDoctor = {
+    id: Date.now(),
+    name: name,
+    email: email,
+    phone: '1234567890',
+    specialization: qualification || 'General Medicine',
+    experience: experience || '0 years',
+    qualification: qualification || 'MBBS',
+    consultation_fee: consultationFee || 500,
+    available_time: availableTime || '9am - 5pm',
+    department_id: departmentId || 1,
+    department_name: 'General Medicine',
+    status: 'active',
+    created_at: new Date().toISOString()
+  };
+  
+  // Add to doctors array
+  data.doctors.push(newDoctor);
+  
+  // Save to file
+  if (writeData(data)) {
+    console.log('✅ Doctor created successfully:', newDoctor);
+    console.log('📊 Total doctors after creation:', data.doctors.length);
+    res.json({
+      message: 'Doctor created successfully',
+      doctor: newDoctor
+    });
+  } else {
+    res.status(500).json({
+      message: 'Error saving doctor data'
+    });
+  }
 });
 
 // Admin patients list endpoint

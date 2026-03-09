@@ -154,17 +154,24 @@ class DoctorController {
 
   static async getDashboardStats(req, res) {
     try {
+      console.log('👨‍⚕️ Getting dashboard stats for user:', req.user.userId);
+      
       const doctor = await Doctor.findByUserId(req.user.userId);
       if (!doctor) {
+        console.log('❌ Doctor not found for user ID:', req.user.userId);
         return res.status(404).json({ message: 'Doctor profile not found' });
       }
 
+      console.log('✅ Doctor found:', doctor);
       const appointments = await Appointment.getByDoctorId(doctor.id);
+      console.log('📊 Appointments found:', appointments.length);
+      
       const today = new Date().toISOString().split('T')[0];
       
-      const todayAppointments = appointments.filter(apt => 
-        apt.appointment_date.startsWith(today)
-      ).length;
+      const todayAppointments = appointments.filter(apt => {
+        const aptDate = apt.appointment_date ? apt.appointment_date.toString() : '';
+        return aptDate.startsWith(today);
+      }).length;
       
       const pendingAppointments = appointments.filter(apt => 
         apt.status === 'pending' || apt.status === 'approved'
@@ -174,15 +181,38 @@ class DoctorController {
         apt.status === 'completed'
       ).length;
 
-      res.json({
+      const stats = {
         totalAppointments: appointments.length,
         todayAppointments,
         pendingAppointments,
         completedAppointments
+      };
+
+      console.log('📊 Doctor Dashboard Stats:', {
+        doctorId: doctor.id,
+        ...stats,
+        today
       });
+
+      res.json(stats);
     } catch (error) {
-      console.error('Get doctor dashboard stats error:', error);
-      res.status(500).json({ message: 'Internal server error' });
+      console.error('❌ Get doctor dashboard stats error:', error);
+      console.error('🔍 Error stack:', error.stack);
+      
+      // Fallback stats if database fails
+      const fallbackStats = {
+        totalAppointments: 0,
+        todayAppointments: 0,
+        pendingAppointments: 0,
+        completedAppointments: 0
+      };
+      
+      console.log('🔄 Returning fallback stats:', fallbackStats);
+      res.status(500).json({ 
+        message: 'Database connection error', 
+        stats: fallbackStats,
+        fallback: true 
+      });
     }
   }
 

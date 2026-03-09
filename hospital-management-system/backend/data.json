@@ -1,0 +1,103 @@
+{
+  "doctors": [
+    {
+      "id": 17,
+      "name": "Dr. Sahil Kumar",
+      "email": "sahildoctor@gmail.com",
+      "phone": "1234567890",
+      "specialization": "General Medicine",
+      "experience": "5 years",
+      "qualification": "MBBS",
+      "consultation_fee": 500,
+      "available_time": "9am - 5pm",
+      "status": "active",
+      "created_at": "2026-03-06T05:39:02.000Z"
+    },
+    {
+      "id": 18,
+      "name": "Dr. Priya Sharma",
+      "email": "priya.sharma@hospital.com",
+      "phone": "9876543210",
+      "specialization": "Cardiology",
+      "experience": "8 years",
+      "qualification": "MD",
+      "consultation_fee": 800,
+      "available_time": "10am - 6pm",
+      "status": "active",
+      "created_at": "2026-03-06T05:39:02.000Z"
+    },
+    {
+      "id": 19,
+      "name": "Dr. Rahul Verma",
+      "email": "rahul.verma@hospital.com",
+      "phone": "9876543211",
+      "specialization": "Orthopedics",
+      "experience": "6 years",
+      "qualification": "MS",
+      "consultation_fee": 600,
+      "available_time": "8am - 4pm",
+      "status": "active",
+      "created_at": "2026-03-06T05:39:02.000Z"
+    },
+    {
+      "id": 20,
+      "name": "Dr. Anjali Patel",
+      "email": "anjali.patel@hospital.com",
+      "phone": "9876543212",
+      "specialization": "Pediatrics",
+      "experience": "7 years",
+      "qualification": "MD",
+      "consultation_fee": 700,
+      "available_time": "9am - 5pm",
+      "status": "active",
+      "created_at": "2026-03-06T05:39:02.000Z"
+    },
+    {
+      "id": 1772952198951,
+      "name": "Dr. Test Doctor",
+      "email": "test.doctor@hospital.com",
+      "phone": "1234567890",
+      "specialization": "MBBS",
+      "experience": "3 years",
+      "qualification": "MBBS",
+      "consultation_fee": 600,
+      "available_time": "9am - 5pm",
+      "department_id": 1,
+      "department_name": "General Medicine",
+      "status": "active",
+      "created_at": "2026-03-08T06:43:18.951Z"
+    },
+    {
+      "id": 1772952242217,
+      "name": "Dr. Test Doctor",
+      "email": "test.doctor@hospital.com",
+      "phone": "1234567890",
+      "specialization": "MBBS",
+      "experience": "3 years",
+      "qualification": "MBBS",
+      "consultation_fee": 600,
+      "available_time": "9am - 5pm",
+      "department_id": 1,
+      "department_name": "General Medicine",
+      "status": "active",
+      "created_at": "2026-03-08T06:44:02.217Z"
+    },
+    {
+      "id": 1772952275983,
+      "name": "meet bagadiya",
+      "email": "meetbagadiya@gmail.com",
+      "phone": "1234567890",
+      "specialization": "MBBS",
+      "experience": "5 year",
+      "qualification": "MBBS",
+      "consultation_fee": "1234",
+      "available_time": "9am - 5pm",
+      "department_id": "9",
+      "department_name": "General Medicine",
+      "status": "active",
+      "created_at": "2026-03-08T06:44:35.983Z"
+    }
+  ],
+  "patients": [],
+  "appointments": []
+}

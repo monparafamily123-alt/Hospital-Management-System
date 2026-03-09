@@ -56,6 +56,25 @@ const DoctorAppointments = () => {
 
   useEffect(() => {
     fetchAppointments();
+    
+    // Set up polling for real-time updates (every 30 seconds)
+    const interval = setInterval(() => {
+      fetchAppointments();
+    }, 30000);
+    
+    // Set up visibility change listener (when user returns to tab)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchAppointments();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const fetchAppointments = async () => {
@@ -236,10 +255,42 @@ FOLLOW-UP: ${prescriptionData.followUp || 'Not required'}
                       <div className="flex items-center">
                         <Calendar className="h-5 w-5 text-gray-400 mr-2" />
                         <div className="text-sm text-gray-500">
-                          {appointment.date && appointment.time 
-                            ? `${new Date(appointment.date).toLocaleDateString()} at ${appointment.time}`
-                            : 'Date not available'
-                          }
+                          {(() => {
+                            if (appointment.appointment_date) {
+                              const date = new Date(appointment.appointment_date);
+                              const time = appointment.appointment_time || appointment.time || 'Not specified';
+                              
+                              // Convert time to 12-hour format
+                              let formattedTime = time;
+                              if (time && time !== 'Not specified' && time.includes(':')) {
+                                const [hours, minutes] = time.split(':');
+                                const hour = parseInt(hours);
+                                const ampm = hour >= 12 ? 'PM' : 'AM';
+                                const displayHour = hour % 12 || 12;
+                                formattedTime = `${displayHour}:${minutes} ${ampm}`;
+                              }
+                              
+                              return `${date.toLocaleDateString()} at ${formattedTime}`;
+                            } else if (appointment.date) {
+                              // Fallback for different field names
+                              const date = new Date(appointment.date);
+                              const time = appointment.time || 'Not specified';
+                              
+                              // Convert time to 12-hour format
+                              let formattedTime = time;
+                              if (time && time !== 'Not specified' && time.includes(':')) {
+                                const [hours, minutes] = time.split(':');
+                                const hour = parseInt(hours);
+                                const ampm = hour >= 12 ? 'PM' : 'AM';
+                                const displayHour = hour % 12 || 12;
+                                formattedTime = `${displayHour}:${minutes} ${ampm}`;
+                              }
+                              
+                              return `${date.toLocaleDateString()} at ${formattedTime}`;
+                            } else {
+                              return 'Date not available';
+                            }
+                          })()}
                         </div>
                       </div>
                     </td>
